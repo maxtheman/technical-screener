@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Technical Screen Demo</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        section {
+            margin-bottom: 40px;
+        }
+
+        .todo-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: #f5f5f5;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+
+        .document-item {
+            padding: 10px;
+            background: #f5f5f5;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+
+        .error {
+            color: red;
+            margin-top: 5px;
+        }
+
+        button {
+            padding: 8px 16px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        input[type="text"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Technical Screen Demo</h1>
+
+    <section id="todos-section">
+        <h2>Todo Items</h2>
+        <div>
+            <input type="text" id="todo-input" placeholder="New todo item">
+            <button onclick="addTodo()">Add Todo</button>
+        </div>
+        <div id="todos-list"></div>
+    </section>
+
+    <section id="documents-section">
+        <h2>Documents</h2>
+        <div>
+            <input type="file" id="file-input">
+            <button onclick="uploadDocument()">Upload</button>
+        </div>
+        <div id="documents-list"></div>
+    </section>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api';
+
+        async function fetchTodos() {
+            try {
+                const response = await fetch(`${API_BASE}/todos`);
+                const todos = await response.json();
+                const todosList = document.getElementById('todos-list');
+                
+                todosList.innerHTML = todos.map(todo => `
+                    <div class="todo-item">
+                        <input type="checkbox" ${todo.completed ? 'checked' : ''} disabled>
+                        <span>${todo.title}</span>
+                        <small>${new Date(todo.created_at).toLocaleString()}</small>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error fetching todos:', error);
+            }
+        }
+
+        async function addTodo() {
+            const input = document.getElementById('todo-input');
+            const title = input.value.trim();
+            
+            if (!title) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/todos`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ title }),
+                });
+
+                if (response.ok) {
+                    input.value = '';
+                    await fetchTodos();
+                }
+            } catch (error) {
+                console.error('Error adding todo:', error);
+            }
+        }
+
+        async function fetchDocuments() {
+            try {
+                const response = await fetch(`${API_BASE}/documents`);
+                const documents = await response.json();
+                const documentsList = document.getElementById('documents-list');
+                
+                documentsList.innerHTML = documents.map(doc => `
+                    <div class="document-item">
+                        <div>${doc.filename}</div>
+                        <small>Size: ${formatFileSize(doc.size)} • Uploaded: ${new Date(doc.uploaded_at).toLocaleString()}</small>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error fetching documents:', error);
+            }
+        }
+
+        async function uploadDocument() {
+            const fileInput = document.getElementById('file-input');
+            const file = fileInput.files[0];
+            
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch(`${API_BASE}/documents`, {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (response.ok) {
+                    fileInput.value = '';
+                    await fetchDocuments();
+                }
+            } catch (error) {
+                console.error('Error uploading document:', error);
+            }
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        fetchTodos();
+        fetchDocuments();
+    </script>
+</body>
+</html> 
