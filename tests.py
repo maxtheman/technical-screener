@@ -171,5 +171,54 @@ class TestWebApp(unittest.TestCase):
             urllib.request.urlopen(request)
         self.assertEqual(context.exception.code, 400)
 
+    def test_document_file_types(self):
+        """Test that files are correctly categorized by type"""
+        # Test image types
+        for ext in ['jpg', 'png', 'gif']:
+            test_filename = f"test.{ext}"
+            response = self._upload_test_file(test_filename)
+            self.assertEqual(response['file_type'], 'IMAGE')
+
+        # Test document types
+        for ext in ['pdf', 'doc', 'txt']:
+            test_filename = f"test.{ext}"
+            response = self._upload_test_file(test_filename)
+            self.assertEqual(response['file_type'], 'DOCUMENT')
+
+        # Test other types
+        for ext in ['zip', 'xyz', 'unknown']:
+            test_filename = f"test.{ext}"
+            response = self._upload_test_file(test_filename)
+            self.assertEqual(response['file_type'], 'OTHER')
+
+    def _upload_test_file(self, filename):
+        """Helper method to upload a test file and return the response"""
+        test_content = b"Test content"
+        boundary = b'----WebKitFormBoundary7MA4YWxkTrZu0gW'
+        body = []
+        body.append(b'--' + boundary)
+        body.append(f'Content-Disposition: form-data; name="file"; filename="{filename}"'.encode())
+        body.append(b'Content-Type: text/plain')
+        body.append(b'')
+        body.append(test_content)
+        body.append(b'--' + boundary + b'--')
+        body.append(b'')
+        body = b'\r\n'.join(body)
+
+        headers = {
+            'Content-Type': f'multipart/form-data; boundary={boundary.decode()}',
+            'Content-Length': str(len(body))
+        }
+
+        request = urllib.request.Request(
+            f"{self.api_url}/documents",
+            data=body,
+            headers=headers,
+            method="POST"
+        )
+
+        with urllib.request.urlopen(request) as response:
+            return json.loads(response.read())
+
 if __name__ == '__main__':
     unittest.main() 

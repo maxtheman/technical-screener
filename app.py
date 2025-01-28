@@ -123,7 +123,6 @@ class RequestHandler(BaseHTTPRequestHandler):
             self._send_error(400, "No filename")
             return
 
-        # Get file content
         file_content = file_part.get_payload(decode=False)
         
         new_doc = Document(
@@ -141,7 +140,6 @@ class RequestHandler(BaseHTTPRequestHandler):
         self._send_cors_headers()
         self.end_headers()
         
-        # Handle dataclass serialization
         if isinstance(data, list):
             json_data = json.dumps([vars(item) for item in data])
         else:
