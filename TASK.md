@@ -10,7 +10,7 @@ Add file type categorization to the document management system. Each document sh
 1. Update the Document model to include a `file_type` field
 2. Modify document creation to automatically detect and set the file type
 
-Run the test suite with `python tests.py` to check your changes.
+Run the test suite with `python tests.py` to check your changes. Ensure that all tests pass.
 
 ## Example
 
